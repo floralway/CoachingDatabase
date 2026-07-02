@@ -216,6 +216,9 @@
         <div class="field"><label>陪跑開始日期</label><input type="date" id="f_start"></div>
         <div class="field"><label>色彩類型</label><input type="text" id="f_color" placeholder="例：柔和冬季"></div>
         <div class="field"><label>骨骼類型</label><input type="text" id="f_skeleton" placeholder="例：直線／自然骨"></div>
+        <div class="field"><label>臉診斷</label><input type="text" id="f_face" placeholder="例：曲線臉／直線臉"></div>
+        <div class="field"><label>穿搭風格</label><input type="text" id="f_style" placeholder="例：簡約俐落／自然柔和"></div>
+        <div class="field full"><label>主訴</label><textarea id="f_complaint" placeholder="客戶當初來找妳想解決的問題"></textarea></div>
         <div class="field full"><label>特殊狀況</label><textarea id="f_special" placeholder="體態、健康、生活型態等需留意事項"></textarea></div>
         <div class="field full"><label>備注</label><textarea id="f_notes" placeholder="其他備注"></textarea></div>
       </div>
@@ -312,6 +315,7 @@ function newClient(data){
   return {
     id: uid(), name: data.name, plan: data.plan, start: data.start,
     colorType: data.color || '', skeletonType: data.skeleton || '',
+    faceType: data.face || '', styleType: data.style || '', chiefComplaint: data.complaint || '',
     special: data.special || '', notes: data.notes || '',
     services: {
       analysis: false,
@@ -441,11 +445,14 @@ function renderCard(c){
       <div class="body-grid">
         <div>
           <div class="info-row"><span class="k">陪跑期間</span><span class="v">${fmtDate(c.start)} － ${fmtDate(endDate(c))}</span></div>
-          <div class="info-row"><span class="k">特殊狀況</span><span class="v">${c.special || '—'}</span></div>
-        </div>
-        <div>
           <div class="info-row"><span class="k">色彩類型</span><span class="v">${c.colorType || '—'}</span></div>
           <div class="info-row"><span class="k">骨骼類型</span><span class="v">${c.skeletonType || '—'}</span></div>
+          <div class="info-row"><span class="k">臉診斷</span><span class="v">${c.faceType || '—'}</span></div>
+        </div>
+        <div>
+          <div class="info-row"><span class="k">穿搭風格</span><span class="v">${c.styleType || '—'}</span></div>
+          <div class="info-row"><span class="k">主訴</span><span class="v">${c.chiefComplaint || '—'}</span></div>
+          <div class="info-row"><span class="k">特殊狀況</span><span class="v">${c.special || '—'}</span></div>
         </div>
       </div>
       <div class="section-title">服務進度</div>
@@ -570,7 +577,7 @@ function openForm(){
 }
 function closeForm(){
   document.getElementById('formPanel').classList.remove('open');
-  ['f_name','f_color','f_skeleton','f_special','f_notes'].forEach(id => document.getElementById(id).value = '');
+  ['f_name','f_color','f_skeleton','f_face','f_style','f_complaint','f_special','f_notes'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('f_plan').value = 'regular';
 }
 
@@ -585,6 +592,9 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
     name, plan: document.getElementById('f_plan').value, start,
     color: document.getElementById('f_color').value.trim(),
     skeleton: document.getElementById('f_skeleton').value.trim(),
+    face: document.getElementById('f_face').value.trim(),
+    style: document.getElementById('f_style').value.trim(),
+    complaint: document.getElementById('f_complaint').value.trim(),
     special: document.getElementById('f_special').value.trim(),
     notes: document.getElementById('f_notes').value.trim()
   };
