@@ -196,6 +196,8 @@
       <input type="text" class="search" id="searchInput" placeholder="搜尋客戶姓名…">
       <select id="filterSelect">
         <option value="all">全部客戶</option>
+        <option value="active">進行中（未結案）</option>
+        <option value="closed">已結案</option>
         <option value="soon">30 天內待對焦</option>
         <option value="expiring">即將到期（30天內）</option>
         <option value="expired">已到期</option>
@@ -207,6 +209,14 @@
     <div class="panel" id="formPanel">
       <div class="form-grid">
         <div class="field"><label>客戶姓名</label><input type="text" id="f_name" placeholder="請輸入姓名"></div>
+        <div class="field"><label>性別</label>
+          <select id="f_gender">
+            <option value="">未填</option>
+            <option value="female">女</option>
+            <option value="male">男</option>
+            <option value="other">其他</option>
+          </select>
+        </div>
         <div class="field"><label>方案類型</label>
           <select id="f_plan">
             <option value="regular">常規版（色彩骨骼分析／衣櫃整理1次／陪購1次／每季對焦）</option>
@@ -221,6 +231,12 @@
         <div class="field full"><label>主訴</label><textarea id="f_complaint" placeholder="客戶當初來找妳想解決的問題"></textarea></div>
         <div class="field full"><label>特殊狀況</label><textarea id="f_special" placeholder="體態、健康、生活型態等需留意事項"></textarea></div>
         <div class="field full"><label>備注</label><textarea id="f_notes" placeholder="其他備注"></textarea></div>
+        <div class="field full">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="f_closed" style="width:16px;height:16px;accent-color:var(--apricot);">
+            <span style="font-size:13px;color:var(--ink);">此客戶已結案</span>
+          </label>
+        </div>
       </div>
       <div class="form-actions">
         <button class="btn-ghost" id="cancelBtn">取消</button>
@@ -314,9 +330,11 @@ function newClient(data){
   const checkins = [1,2,3,4].map(i => ({ date: addMonths(data.start, i*3), done:false }));
   return {
     id: uid(), name: data.name, plan: data.plan, start: data.start,
+    gender: data.gender || '',
     colorType: data.color || '', skeletonType: data.skeleton || '',
     faceType: data.face || '', styleType: data.style || '', chiefComplaint: data.complaint || '',
     special: data.special || '', notes: data.notes || '',
+    closed: !!data.closed,
     services: {
       analysis: false,
       wardrobe: cfg.hasWardrobe ? false : null,
@@ -337,7 +355,7 @@ function statusInfo(c){
 function upcomingCheckinsCount(){
   const today = todayStr();
   let count = 0;
-  clients.forEach(c => c.checkins.forEach(ci => {
+  clients.filter(c => !c.closed).forEach(c => c.checkins.forEach(ci => {
     if(!ci.done){
       const d = daysBetween(today, ci.date);
       if(d >= 0 && d <= 30) count++;
@@ -347,9 +365,9 @@ function upcomingCheckinsCount(){
 }
 
 function renderStats(){
-  const total = clients.length;
+  const total = clients.filter(c => !c.closed).length;
   const soonCheckins = upcomingCheckinsCount();
-  const expiring = clients.filter(c => statusInfo(c).type === 'soon').length;
+  const expiring = clients.filter(c => !c.closed && statusInfo(c).type === 'soon').length;
   document.getElementById('stats').innerHTML = `
     <div class="stat"><div class="num">${total}</div><div class="lbl">進行中客戶</div></div>
     <div class="stat"><div class="num">${soonCheckins}</div><div class="lbl">30天內待對焦</div></div>
@@ -357,6 +375,12 @@ function renderStats(){
   `;
 }
 function initials(name){ return name ? name.trim().slice(0,1) : '？'; }
+function genderLabel(g){
+  if(g === 'female') return '女';
+  if(g === 'male') return '男';
+  if(g === 'other') return '其他';
+  return '—';
+}
 
 function renderList(){
   const search = document.getElementById('searchInput').value.trim().toLowerCase();
@@ -366,6 +390,8 @@ function renderList(){
   let list = clients.filter(c => {
     if(search && !c.name.toLowerCase().includes(search)) return false;
     const s = statusInfo(c);
+    if(filter === 'active') return !c.closed;
+    if(filter === 'closed') return !!c.closed;
     if(filter === 'expiring') return s.type === 'soon';
     if(filter === 'expired') return s.type === 'expired';
     if(filter === 'soon') return c.checkins.some(ci => !ci.done && daysBetween(today, ci.date) >= 0 && daysBetween(today, ci.date) <= 30);
@@ -391,6 +417,7 @@ function renderCard(c){
 
   const planClass = c.plan === 'custom' ? 'plan-custom' : 'plan-regular';
   const planLabel = c.plan === 'custom' ? '客製版' : '常規版';
+  const closedBadge = c.closed ? '<span class="plan-badge" style="background:#EDEAE3;color:var(--ink-soft);">已結案</span>' : '';
   const cfg = planConfig(c.plan);
 
   let servicesHtml = `
@@ -431,7 +458,7 @@ function renderCard(c){
         <div class="name-block">
           <div class="name">${c.name}</div>
           <div class="meta-line">
-            <span class="plan-badge ${planClass}">${planLabel}</span>
+            <span class="plan-badge ${planClass}">${planLabel}</span>${closedBadge}
             ${fmtDate(c.start)} 起 · ${c.colorType || '色彩未填'} · ${c.skeletonType || '骨骼未填'}
           </div>
         </div>
@@ -445,6 +472,7 @@ function renderCard(c){
       <div class="body-grid">
         <div>
           <div class="info-row"><span class="k">陪跑期間</span><span class="v">${fmtDate(c.start)} － ${fmtDate(endDate(c))}</span></div>
+          <div class="info-row"><span class="k">性別</span><span class="v">${genderLabel(c.gender)}</span></div>
           <div class="info-row"><span class="k">色彩類型</span><span class="v">${c.colorType || '—'}</span></div>
           <div class="info-row"><span class="k">骨骼類型</span><span class="v">${c.skeletonType || '—'}</span></div>
           <div class="info-row"><span class="k">臉診斷</span><span class="v">${c.faceType || '—'}</span></div>
@@ -464,6 +492,10 @@ function renderCard(c){
         <textarea class="notes" data-cid="${c.id}" placeholder="輸入備注…">${c.notes}</textarea>
       </div>
       <div class="card-footer">
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12.5px;color:var(--ink-soft);">
+          <input type="checkbox" data-cid="${c.id}" data-closed="1" ${c.closed?'checked':''} style="width:15px;height:15px;accent-color:var(--ink-soft);">
+          此客戶已結案
+        </label>
         <span class="sync-tag" id="tag-${c.id}"></span>
         <button class="btn-text" data-delete="${c.id}">刪除客戶</button>
       </div>
@@ -553,6 +585,18 @@ function attachCardEvents(){
     });
   });
 
+  document.querySelectorAll('input[data-closed]').forEach(el => {
+    el.addEventListener('click', e => e.stopPropagation());
+    el.addEventListener('change', async () => {
+      const cid = el.getAttribute('data-cid');
+      const c = clients.find(x => x.id === cid);
+      if(!c) return;
+      c.closed = el.checked;
+      renderAll();
+      await pushClient(c);
+    });
+  });
+
   document.querySelectorAll('[data-delete]').forEach(el => {
     el.addEventListener('click', async (e) => {
       e.stopPropagation();
@@ -578,6 +622,8 @@ function openForm(){
 function closeForm(){
   document.getElementById('formPanel').classList.remove('open');
   ['f_name','f_color','f_skeleton','f_face','f_style','f_complaint','f_special','f_notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f_gender').value = '';
+  document.getElementById('f_closed').checked = false;
   document.getElementById('f_plan').value = 'regular';
 }
 
@@ -590,13 +636,15 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
   if(!start){ alert('請選擇陪跑開始日期'); return; }
   const data = {
     name, plan: document.getElementById('f_plan').value, start,
+    gender: document.getElementById('f_gender').value,
     color: document.getElementById('f_color').value.trim(),
     skeleton: document.getElementById('f_skeleton').value.trim(),
     face: document.getElementById('f_face').value.trim(),
     style: document.getElementById('f_style').value.trim(),
     complaint: document.getElementById('f_complaint').value.trim(),
     special: document.getElementById('f_special').value.trim(),
-    notes: document.getElementById('f_notes').value.trim()
+    notes: document.getElementById('f_notes').value.trim(),
+    closed: document.getElementById('f_closed').checked
   };
   const c = newClient(data);
   clients.push(c);
