@@ -262,7 +262,11 @@ const WEEKDAYS = ['日','一','二','三','四','五','六'];
 const STORAGE_KEY = 'floralway_script_url';
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
+function isValidDateStr(s){
+  return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(new Date(s + 'T00:00:00Z').getTime());
+}
 function addMonths(dateStr, n){
+  if(!isValidDateStr(dateStr)) return null;
   const d = new Date(dateStr + 'T00:00:00Z');
   d.setUTCMonth(d.getUTCMonth() + n);
   return d.toISOString().slice(0,10);
@@ -355,8 +359,10 @@ function newClient(data){
 
 function endDate(c){ return addMonths(c.start, 12); }
 function statusInfo(c){
+  const end = endDate(c);
+  if(!end) return {type:'unknown', remain:null};
   const today = todayStr();
-  const remain = daysBetween(today, endDate(c));
+  const remain = daysBetween(today, end);
   if(remain < 0) return {type:'expired', remain};
   if(remain <= 30) return {type:'soon', remain};
   return {type:'ok', remain};
@@ -406,7 +412,10 @@ function renderList(){
     if(filter === 'soon') return c.checkins.some(ci => !ci.done && daysBetween(today, ci.date) >= 0 && daysBetween(today, ci.date) <= 30);
     return true;
   });
-  list = list.slice().sort((a,b) => statusInfo(a).remain - statusInfo(b).remain);
+  list = list.slice().sort((a,b) => {
+    const ra = statusInfo(a).remain, rb = statusInfo(b).remain;
+    return (ra===null?Infinity:ra) - (rb===null?Infinity:rb);
+  });
 
   const container = document.getElementById('clientList');
   if(list.length === 0){
@@ -420,9 +429,11 @@ function renderList(){
 function renderCard(c){
   const s = statusInfo(c);
   const isOpen = openIds.has(c.id);
-  let badgeClass = 'days-ok', badgeText = `剩餘 ${s.remain} 天`;
-  if(s.type === 'expired'){ badgeClass = 'days-done'; badgeText = '已到期'; }
+  let badgeClass, badgeText;
+  if(s.type === 'unknown'){ badgeClass = 'days-done'; badgeText = '開始日期異常'; }
+  else if(s.type === 'expired'){ badgeClass = 'days-done'; badgeText = '已到期'; }
   else if(s.type === 'soon'){ badgeClass = 'days-urgent'; badgeText = `剩餘 ${s.remain} 天`; }
+  else { badgeClass = 'days-ok'; badgeText = `剩餘 ${s.remain} 天`; }
 
   const planClass = c.plan === 'custom' ? 'plan-custom' : 'plan-regular';
   const planLabel = c.plan === 'custom' ? '客製版' : '常規版';
