@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="陪跑追蹤">
+<meta name="theme-color" content="#F7F2EA">
+<title>陪跑客戶追蹤 · Floralway</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#F7F2EA;
+    --card:#FFFDF9;
+    --apricot:#C98B5E;
+    --apricot-deep:#A66F45;
+    --apricot-pale:#F0DCC8;
+    --sage:#93A182;
+    --sage-pale:#E3E8DA;
+    --rose:#BE8479;
+    --rose-pale:#F1DFDA;
+    --ink:#4A3F35;
+    --ink-soft:#8A7D6E;
+    --border:#E7DECE;
+    --border-soft:#F0E8DA;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'Noto Sans TC',sans-serif;
+    font-weight:400;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:960px;margin:0 auto;padding:32px 20px 80px;}
+  .top-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+  h1{
+    font-family:'Noto Serif TC',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:0 0 4px;
+    letter-spacing:.02em;
+  }
+  .sub{color:var(--ink-soft);font-size:13.5px;margin:0 0 28px;}
+  .gear{background:transparent;border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--ink-soft);cursor:pointer;}
+  .gear:hover{border-color:var(--apricot);color:var(--apricot-deep);}
+
+  .divider{display:flex;align-items:center;gap:8px;margin:36px 0 16px;}
+  .divider .dot{width:6px;height:6px;border-radius:50%;background:var(--apricot);}
+  .divider span.label{font-family:'Noto Serif TC',serif;font-size:15px;font-weight:600;color:var(--ink);}
+  .divider .line{flex:1;height:1px;background:var(--border);}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;}
+  .stat{background:var(--card);border:1px solid var(--border-soft);border-radius:14px;padding:16px 18px;}
+  .stat .num{font-family:'Noto Serif TC',serif;font-size:26px;font-weight:600;color:var(--apricot-deep);}
+  .stat .lbl{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px;}
+  input[type=text],select,input[type=date],input[type=url]{
+    font-family:'Noto Sans TC',sans-serif;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:9px 12px;
+    font-size:13.5px;
+    color:var(--ink);
+    outline:none;
+  }
+  input:focus,select:focus,textarea:focus{border-color:var(--apricot);}
+  .search{flex:1;min-width:160px;}
+  button{
+    font-family:'Noto Sans TC',sans-serif;
+    cursor:pointer;
+    border:none;
+    border-radius:10px;
+    font-size:13.5px;
+    padding:9px 16px;
+  }
+  .btn-primary{background:var(--apricot);color:#fff;font-weight:500;}
+  .btn-primary:hover{background:var(--apricot-deep);}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--ink-soft);}
+  .btn-ghost:hover{border-color:var(--apricot);color:var(--apricot-deep);}
+  .btn-text{background:transparent;color:var(--ink-soft);padding:4px 8px;font-size:12.5px;}
+  .btn-text:hover{color:var(--rose);}
+
+  .panel{
+    background:var(--card);border:1px solid var(--border-soft);border-radius:16px;
+    padding:20px 22px;margin-top:14px;display:none;
+  }
+  .panel.open{display:block;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .form-grid .full{grid-column:1/-1;}
+  .field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;}
+  .field input,.field select,.field textarea{width:100%;}
+  textarea{font-family:'Noto Sans TC',sans-serif;border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:13.5px;resize:vertical;min-height:52px;color:var(--ink);}
+  .form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;}
+  .hint{font-size:12px;color:var(--ink-soft);margin-top:8px;line-height:1.6;}
+
+  .banner{padding:11px 16px;border-radius:10px;font-size:13px;margin-top:14px;display:none;}
+  .banner.show{display:block;}
+  .banner-error{background:var(--rose-pale);color:#8A3F32;}
+  .banner-info{background:var(--sage-pale);color:#556147;}
+
+  .client-list{display:flex;flex-direction:column;gap:12px;margin-top:14px;}
+  .card{background:var(--card);border:1px solid var(--border-soft);border-radius:16px;overflow:hidden;}
+  .card-head{padding:16px 20px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:12px;}
+  .card-head:hover{background:#FCFAF5;}
+  .head-left{display:flex;align-items:center;gap:14px;min-width:0;}
+  .avatar{width:38px;height:38px;border-radius:50%;flex-shrink:0;background:var(--apricot-pale);color:var(--apricot-deep);display:flex;align-items:center;justify-content:center;font-family:'Noto Serif TC',serif;font-weight:600;font-size:14px;}
+  .name-block{min-width:0;}
+  .name{font-weight:500;font-size:15px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .meta-line{font-size:12px;color:var(--ink-soft);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .plan-badge{display:inline-block;font-size:11px;padding:2px 9px;border-radius:20px;font-weight:500;margin-right:6px;}
+  .plan-regular{background:var(--sage-pale);color:#556147;}
+  .plan-custom{background:var(--apricot-pale);color:var(--apricot-deep);}
+  .head-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+  .days-badge{font-size:12px;padding:4px 11px;border-radius:20px;font-weight:500;white-space:nowrap;}
+  .days-ok{background:var(--sage-pale);color:#556147;}
+  .days-soon{background:#F6E9D0;color:#8A5A16;}
+  .days-urgent{background:var(--rose-pale);color:#8A3F32;}
+  .days-done{background:#EDEAE3;color:var(--ink-soft);}
+  .chevron{color:var(--ink-soft);font-size:13px;transition:transform .15s;}
+  .card.open .chevron{transform:rotate(180deg);}
+
+  .card-body{display:none;padding:0 20px 20px;border-top:1px solid var(--border-soft);}
+  .card.open .card-body{display:block;}
+  .body-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:16px;}
+  .info-row{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px dashed var(--border-soft);}
+  .info-row .k{color:var(--ink-soft);}
+  .info-row .v{color:var(--ink);font-weight:500;text-align:right;max-width:60%;}
+
+  .section-title{font-size:12.5px;font-weight:500;color:var(--ink-soft);margin:18px 0 8px;letter-spacing:.03em;}
+  .service-row{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:13.5px;}
+  .service-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--apricot);}
+  .service-row.done label{color:var(--ink-soft);text-decoration:line-through;}
+
+  .checkin-row{display:flex;align-items:center;gap:10px;padding:7px 0;flex-wrap:wrap;}
+  .checkin-row .idx{font-size:12px;color:var(--ink-soft);width:52px;flex-shrink:0;}
+  .checkin-row input[type=date]{padding:6px 9px;font-size:13px;}
+  .checkin-row .weekday{font-size:12.5px;color:var(--apricot-deep);font-weight:500;min-width:52px;}
+  .checkin-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--sage);margin-left:4px;}
+  .checkin-row.done .weekday{color:var(--ink-soft);}
+
+  textarea.notes{width:100%;margin-top:6px;}
+  .notes-wrap{margin-top:16px;}
+  .card-footer{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--border-soft);}
+  .sync-tag{font-size:11px;color:var(--ink-soft);}
+
+  .empty{text-align:center;padding:60px 20px;color:var(--ink-soft);}
+  .empty .big{font-family:'Noto Serif TC',serif;font-size:16px;color:var(--ink);margin-bottom:6px;}
+
+  .setup-box{text-align:center;padding:50px 20px;}
+  .setup-box .big{font-family:'Noto Serif TC',serif;font-size:18px;margin-bottom:10px;}
+  .setup-box input{width:100%;max-width:420px;margin:14px auto 0;}
+
+  @media (max-width:640px){
+    .form-grid,.body-grid{grid-template-columns:1fr;}
+    .toolbar{flex-direction:column;align-items:stretch;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top-row">
+    <div>
+      <h1>陪跑客戶追蹤</h1>
+      <p class="sub">質穎形象顏究室® · 花路陪伴系統™ 進度管理</p>
+    </div>
+    <button class="gear" id="settingsBtn">⚙ 設定</button>
+  </div>
+
+  <div class="panel" id="settingsPanel">
+    <div class="field">
+      <label>Google Apps Script 網頁應用程式網址</label>
+      <input type="url" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
+    </div>
+    <p class="hint">這個網址來自妳部署的 Apps Script 後端，資料會直接讀寫進妳的 Google 試算表。此網址只會存在這台裝置的瀏覽器裡。</p>
+    <div class="form-actions">
+      <button class="btn-ghost" id="settingsCancelBtn">取消</button>
+      <button class="btn-primary" id="settingsSaveBtn">儲存並連線</button>
+    </div>
+  </div>
+
+  <div id="banner" class="banner"></div>
+
+  <div id="mainArea" style="display:none;">
+    <div class="stats" id="stats"></div>
+
+    <div class="divider"><div class="dot"></div><span class="label">客戶名單</span><div class="line"></div></div>
+
+    <div class="toolbar">
+      <input type="text" class="search" id="searchInput" placeholder="搜尋客戶姓名…">
+      <select id="filterSelect">
+        <option value="all">全部客戶</option>
+        <option value="soon">30 天內待對焦</option>
+        <option value="expiring">即將到期（30天內）</option>
+        <option value="expired">已到期</option>
+      </select>
+      <button class="btn-ghost" id="refreshBtn">↻ 重新整理</button>
+      <button class="btn-primary" id="addBtn">+ 新增陪跑客戶</button>
+    </div>
+
+    <div class="panel" id="formPanel">
+      <div class="form-grid">
+        <div class="field"><label>客戶姓名</label><input type="text" id="f_name" placeholder="請輸入姓名"></div>
+        <div class="field"><label>方案類型</label>
+          <select id="f_plan">
+            <option value="regular">常規版（色彩骨骼分析／衣櫃整理1次／陪購1次／每季對焦）</option>
+            <option value="custom">客製版（色彩骨骼分析／陪購2次／每季對焦）</option>
+          </select>
+        </div>
+        <div class="field"><label>陪跑開始日期</label><input type="date" id="f_start"></div>
+        <div class="field"><label>色彩類型</label><input type="text" id="f_color" placeholder="例：柔和冬季"></div>
+        <div class="field"><label>骨骼類型</label><input type="text" id="f_skeleton" placeholder="例：直線／自然骨"></div>
+        <div class="field full"><label>特殊狀況</label><textarea id="f_special" placeholder="體態、健康、生活型態等需留意事項"></textarea></div>
+        <div class="field full"><label>備注</label><textarea id="f_notes" placeholder="其他備注"></textarea></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-ghost" id="cancelBtn">取消</button>
+        <button class="btn-primary" id="saveBtn">儲存客戶</button>
+      </div>
+    </div>
+
+    <div class="client-list" id="clientList"></div>
+  </div>
+
+  <div class="setup-box" id="setupBox" style="display:none;">
+    <div class="big">先連接妳的 Google 試算表</div>
+    <p class="hint">部署好 Apps Script 後端之後，把「網頁應用程式網址」貼在下面，就能開始使用。</p>
+    <input type="url" id="setupUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
+    <div style="margin-top:14px;">
+      <button class="btn-primary" id="setupSaveBtn">連線</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const WEEKDAYS = ['日','一','二','三','四','五','六'];
+const STORAGE_KEY = 'floralway_script_url';
+
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function addMonths(dateStr, n){
+  const d = new Date(dateStr + 'T00:00:00Z');
+  d.setUTCMonth(d.getUTCMonth() + n);
+  return d.toISOString().slice(0,10);
+}
+function weekdayLabel(dateStr){
+  if(!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00Z');
+  return '星期' + WEEKDAYS[d.getUTCDay()];
+}
+function daysBetween(a,b){
+  const da = new Date(a + 'T00:00:00Z');
+  const db = new Date(b + 'T00:00:00Z');
+  return Math.round((db - da) / 86400000);
+}
+function fmtDate(dateStr){
+  if(!dateStr) return '';
+  const [y,m,d] = dateStr.split('-');
+  return `${y}/${m}/${d}`;
+}
+function uid(){ return 'c_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+let clients = [];
+let openIds = new Set();
+let scriptUrl = localStorage.getItem(STORAGE_KEY) || '';
+let lastSync = null;
+
+function showBanner(type, msg){
+  const b = document.getElementById('banner');
+  b.className = 'banner show banner-' + type;
+  b.textContent = msg;
+}
+function hideBanner(){
+  document.getElementById('banner').className = 'banner';
+}
+
+async function apiGetClients(){
+  const res = await fetch(scriptUrl, { method: 'GET' });
+  if(!res.ok) throw new Error('讀取失敗 (' + res.status + ')');
+  const data = await res.json();
+  return data.clients || [];
+}
+async function apiUpsert(client){
+  const res = await fetch(scriptUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'upsert', client })
+  });
+  return res.json().catch(() => ({status:'ok'}));
+}
+async function apiDelete(id){
+  const res = await fetch(scriptUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'delete', id })
+  });
+  return res.json().catch(() => ({status:'ok'}));
+}
+
+function planConfig(plan){
+  return plan === 'custom' ? { hasWardrobe:false, shoppingCount:2 } : { hasWardrobe:true, shoppingCount:1 };
+}
+
+function newClient(data){
+  const cfg = planConfig(data.plan);
+  const checkins = [1,2,3,4].map(i => ({ date: addMonths(data.start, i*3), done:false }));
+  return {
+    id: uid(), name: data.name, plan: data.plan, start: data.start,
+    colorType: data.color || '', skeletonType: data.skeleton || '',
+    special: data.special || '', notes: data.notes || '',
+    services: {
+      analysis: false,
+      wardrobe: cfg.hasWardrobe ? false : null,
+      shopping: Array(cfg.shoppingCount).fill(false)
+    },
+    checkins
+  };
+}
+
+function endDate(c){ return addMonths(c.start, 12); }
+function statusInfo(c){
+  const today = todayStr();
+  const remain = daysBetween(today, endDate(c));
+  if(remain < 0) return {type:'expired', remain};
+  if(remain <= 30) return {type:'soon', remain};
+  return {type:'ok', remain};
+}
+function upcomingCheckinsCount(){
+  const today = todayStr();
+  let count = 0;
+  clients.forEach(c => c.checkins.forEach(ci => {
+    if(!ci.done){
+      const d = daysBetween(today, ci.date);
+      if(d >= 0 && d <= 30) count++;
+    }
+  }));
+  return count;
+}
+
+function renderStats(){
+  const total = clients.length;
+  const soonCheckins = upcomingCheckinsCount();
+  const expiring = clients.filter(c => statusInfo(c).type === 'soon').length;
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="num">${total}</div><div class="lbl">進行中客戶</div></div>
+    <div class="stat"><div class="num">${soonCheckins}</div><div class="lbl">30天內待對焦</div></div>
+    <div class="stat"><div class="num">${expiring}</div><div class="lbl">即將到期（30天內）</div></div>
+  `;
+}
+function initials(name){ return name ? name.trim().slice(0,1) : '？'; }
+
+function renderList(){
+  const search = document.getElementById('searchInput').value.trim().toLowerCase();
+  const filter = document.getElementById('filterSelect').value;
+  const today = todayStr();
+
+  let list = clients.filter(c => {
+    if(search && !c.name.toLowerCase().includes(search)) return false;
+    const s = statusInfo(c);
+    if(filter === 'expiring') return s.type === 'soon';
+    if(filter === 'expired') return s.type === 'expired';
+    if(filter === 'soon') return c.checkins.some(ci => !ci.done && daysBetween(today, ci.date) >= 0 && daysBetween(today, ci.date) <= 30);
+    return true;
+  });
+  list = list.slice().sort((a,b) => statusInfo(a).remain - statusInfo(b).remain);
+
+  const container = document.getElementById('clientList');
+  if(list.length === 0){
+    container.innerHTML = `<div class="empty"><div class="big">還沒有符合條件的客戶</div><div>新增一位陪跑客戶，開始追蹤她的花路旅程。</div></div>`;
+    return;
+  }
+  container.innerHTML = list.map(c => renderCard(c)).join('');
+  attachCardEvents();
+}
+
+function renderCard(c){
+  const s = statusInfo(c);
+  const isOpen = openIds.has(c.id);
+  let badgeClass = 'days-ok', badgeText = `剩餘 ${s.remain} 天`;
+  if(s.type === 'expired'){ badgeClass = 'days-done'; badgeText = '已到期'; }
+  else if(s.type === 'soon'){ badgeClass = 'days-urgent'; badgeText = `剩餘 ${s.remain} 天`; }
+
+  const planClass = c.plan === 'custom' ? 'plan-custom' : 'plan-regular';
+  const planLabel = c.plan === 'custom' ? '客製版' : '常規版';
+  const cfg = planConfig(c.plan);
+
+  let servicesHtml = `
+    <div class="service-row ${c.services.analysis?'done':''}">
+      <input type="checkbox" data-cid="${c.id}" data-svc="analysis" ${c.services.analysis?'checked':''}>
+      <label>色彩骨骼分析</label>
+    </div>`;
+  if(cfg.hasWardrobe){
+    servicesHtml += `
+    <div class="service-row ${c.services.wardrobe?'done':''}">
+      <input type="checkbox" data-cid="${c.id}" data-svc="wardrobe" ${c.services.wardrobe?'checked':''}>
+      <label>衣櫃整理</label>
+    </div>`;
+  }
+  (c.services.shopping||[]).forEach((done, i) => {
+    servicesHtml += `
+    <div class="service-row ${done?'done':''}">
+      <input type="checkbox" data-cid="${c.id}" data-svc="shopping" data-idx="${i}" ${done?'checked':''}>
+      <label>陪購 #${i+1}</label>
+    </div>`;
+  });
+
+  const checkinsHtml = c.checkins.map((ci, i) => `
+    <div class="checkin-row ${ci.done?'done':''}">
+      <span class="idx">Q${i+1} 對焦</span>
+      <input type="date" data-cid="${c.id}" data-ci="${i}" value="${ci.date}">
+      <span class="weekday">${weekdayLabel(ci.date)}</span>
+      <input type="checkbox" data-cid="${c.id}" data-cidone="${i}" ${ci.done?'checked':''}>
+      <label style="font-size:12px;color:var(--ink-soft);">已完成</label>
+    </div>
+  `).join('');
+
+  return `
+  <div class="card ${isOpen?'open':''}" data-id="${c.id}">
+    <div class="card-head" data-toggle="${c.id}">
+      <div class="head-left">
+        <div class="avatar">${initials(c.name)}</div>
+        <div class="name-block">
+          <div class="name">${c.name}</div>
+          <div class="meta-line">
+            <span class="plan-badge ${planClass}">${planLabel}</span>
+            ${fmtDate(c.start)} 起 · ${c.colorType || '色彩未填'} · ${c.skeletonType || '骨骼未填'}
+          </div>
+        </div>
+      </div>
+      <div class="head-right">
+        <span class="days-badge ${badgeClass}">${badgeText}</span>
+        <span class="chevron">▾</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="body-grid">
+        <div>
+          <div class="info-row"><span class="k">陪跑期間</span><span class="v">${fmtDate(c.start)} － ${fmtDate(endDate(c))}</span></div>
+          <div class="info-row"><span class="k">特殊狀況</span><span class="v">${c.special || '—'}</span></div>
+        </div>
+        <div>
+          <div class="info-row"><span class="k">色彩類型</span><span class="v">${c.colorType || '—'}</span></div>
+          <div class="info-row"><span class="k">骨骼類型</span><span class="v">${c.skeletonType || '—'}</span></div>
+        </div>
+      </div>
+      <div class="section-title">服務進度</div>
+      ${servicesHtml}
+      <div class="section-title">每季線上對焦（每3個月一次）</div>
+      ${checkinsHtml}
+      <div class="notes-wrap">
+        <div class="section-title" style="margin-top:0;">備注</div>
+        <textarea class="notes" data-cid="${c.id}" placeholder="輸入備注…">${c.notes}</textarea>
+      </div>
+      <div class="card-footer">
+        <span class="sync-tag" id="tag-${c.id}"></span>
+        <button class="btn-text" data-delete="${c.id}">刪除客戶</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function markSyncing(id, state){
+  const el = document.getElementById('tag-' + id);
+  if(!el) return;
+  if(state === 'syncing') el.textContent = '同步中…';
+  else if(state === 'ok') el.textContent = '已同步至試算表';
+  else if(state === 'error') el.textContent = '同步失敗，請檢查網路連線';
+}
+
+async function pushClient(c){
+  markSyncing(c.id, 'syncing');
+  try{
+    await apiUpsert(c);
+    markSyncing(c.id, 'ok');
+  }catch(e){
+    markSyncing(c.id, 'error');
+  }
+}
+
+function attachCardEvents(){
+  document.querySelectorAll('[data-toggle]').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.getAttribute('data-toggle');
+      if(openIds.has(id)) openIds.delete(id); else openIds.add(id);
+      renderList();
+    });
+  });
+
+  document.querySelectorAll('input[data-svc]').forEach(el => {
+    el.addEventListener('click', e => e.stopPropagation());
+    el.addEventListener('change', async () => {
+      const cid = el.getAttribute('data-cid');
+      const svc = el.getAttribute('data-svc');
+      const c = clients.find(x => x.id === cid);
+      if(!c) return;
+      if(svc === 'shopping'){
+        const idx = parseInt(el.getAttribute('data-idx'), 10);
+        c.services.shopping[idx] = el.checked;
+      } else {
+        c.services[svc] = el.checked;
+      }
+      renderList();
+      await pushClient(c);
+    });
+  });
+
+  document.querySelectorAll('input[type=date][data-ci]').forEach(el => {
+    el.addEventListener('click', e => e.stopPropagation());
+    el.addEventListener('change', async () => {
+      const cid = el.getAttribute('data-cid');
+      const idx = parseInt(el.getAttribute('data-ci'), 10);
+      const c = clients.find(x => x.id === cid);
+      if(!c || !el.value) return;
+      c.checkins[idx].date = el.value;
+      renderList();
+      await pushClient(c);
+    });
+  });
+
+  document.querySelectorAll('input[data-cidone]').forEach(el => {
+    el.addEventListener('click', e => e.stopPropagation());
+    el.addEventListener('change', async () => {
+      const cid = el.getAttribute('data-cid');
+      const idx = parseInt(el.getAttribute('data-cidone'), 10);
+      const c = clients.find(x => x.id === cid);
+      if(!c) return;
+      c.checkins[idx].done = el.checked;
+      renderList();
+      await pushClient(c);
+    });
+  });
+
+  document.querySelectorAll('textarea.notes').forEach(el => {
+    el.addEventListener('click', e => e.stopPropagation());
+    el.addEventListener('blur', async () => {
+      const cid = el.getAttribute('data-cid');
+      const c = clients.find(x => x.id === cid);
+      if(!c) return;
+      c.notes = el.value;
+      await pushClient(c);
+    });
+  });
+
+  document.querySelectorAll('[data-delete]').forEach(el => {
+    el.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const id = el.getAttribute('data-delete');
+      const c = clients.find(x => x.id === id);
+      if(!c) return;
+      if(confirm(`確定要刪除「${c.name}」的追蹤紀錄嗎？此動作無法復原。`)){
+        clients = clients.filter(x => x.id !== id);
+        openIds.delete(id);
+        renderAll();
+        try{ await apiDelete(id); }catch(err){ showBanner('error','刪除同步失敗，請檢查網路連線後重新整理'); }
+      }
+    });
+  });
+}
+
+function renderAll(){ renderStats(); renderList(); }
+
+function openForm(){
+  document.getElementById('formPanel').classList.add('open');
+  document.getElementById('f_start').value = todayStr();
+}
+function closeForm(){
+  document.getElementById('formPanel').classList.remove('open');
+  ['f_name','f_color','f_skeleton','f_special','f_notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f_plan').value = 'regular';
+}
+
+document.getElementById('addBtn').addEventListener('click', openForm);
+document.getElementById('cancelBtn').addEventListener('click', closeForm);
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  const name = document.getElementById('f_name').value.trim();
+  const start = document.getElementById('f_start').value;
+  if(!name){ alert('請輸入客戶姓名'); return; }
+  if(!start){ alert('請選擇陪跑開始日期'); return; }
+  const data = {
+    name, plan: document.getElementById('f_plan').value, start,
+    color: document.getElementById('f_color').value.trim(),
+    skeleton: document.getElementById('f_skeleton').value.trim(),
+    special: document.getElementById('f_special').value.trim(),
+    notes: document.getElementById('f_notes').value.trim()
+  };
+  const c = newClient(data);
+  clients.push(c);
+  closeForm();
+  renderAll();
+  try{ await apiUpsert(c); }
+  catch(e){ showBanner('error','新增已儲存在畫面上，但同步到試算表失敗，請檢查網路連線'); }
+});
+
+document.getElementById('searchInput').addEventListener('input', renderList);
+document.getElementById('filterSelect').addEventListener('change', renderList);
+document.getElementById('refreshBtn').addEventListener('click', () => loadAndRender(true));
+
+document.getElementById('settingsBtn').addEventListener('click', () => {
+  document.getElementById('scriptUrlInput').value = scriptUrl;
+  document.getElementById('settingsPanel').classList.add('open');
+});
+document.getElementById('settingsCancelBtn').addEventListener('click', () => {
+  document.getElementById('settingsPanel').classList.remove('open');
+});
+document.getElementById('settingsSaveBtn').addEventListener('click', () => {
+  const url = document.getElementById('scriptUrlInput').value.trim();
+  if(!url){ alert('請貼上網頁應用程式網址'); return; }
+  scriptUrl = url;
+  localStorage.setItem(STORAGE_KEY, url);
+  document.getElementById('settingsPanel').classList.remove('open');
+  loadAndRender(true);
+});
+document.getElementById('setupSaveBtn').addEventListener('click', () => {
+  const url = document.getElementById('setupUrlInput').value.trim();
+  if(!url){ alert('請貼上網頁應用程式網址'); return; }
+  scriptUrl = url;
+  localStorage.setItem(STORAGE_KEY, url);
+  loadAndRender(true);
+});
+
+async function loadAndRender(showLoadingBanner){
+  if(!scriptUrl){
+    document.getElementById('setupBox').style.display = 'block';
+    document.getElementById('mainArea').style.display = 'none';
+    return;
+  }
+  document.getElementById('setupBox').style.display = 'none';
+  if(showLoadingBanner) showBanner('info', '連線中…');
+  try{
+    clients = await apiGetClients();
+    hideBanner();
+    document.getElementById('mainArea').style.display = 'block';
+    renderAll();
+  }catch(e){
+    showBanner('error', '無法連線到 Google 試算表，請確認網址是否正確、Apps Script 是否已部署為「任何人均可存取」。');
+    document.getElementById('mainArea').style.display = clients.length ? 'block' : 'none';
+  }
+}
+
+loadAndRender(true);
+</script>
+</body>
+</html>
