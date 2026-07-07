@@ -302,6 +302,11 @@ function hideBanner(){
   document.getElementById('banner').className = 'banner';
 }
 
+function normalizeDateStr(s){
+  if(!s) return '';
+  const m = String(s).match(/^(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : String(s);
+}
 async function apiGetClients(){
   const res = await fetch(scriptUrl, { method: 'GET' });
   if(!res.ok) throw new Error('HTTP 狀態碼 ' + res.status);
@@ -315,7 +320,14 @@ async function apiGetClients(){
   if(data.error){
     throw new Error('後端執行錯誤：' + data.error);
   }
-  return data.clients || [];
+  const list = data.clients || [];
+  list.forEach(c => {
+    c.start = normalizeDateStr(c.start);
+    if(Array.isArray(c.checkins)){
+      c.checkins.forEach(ci => { ci.date = normalizeDateStr(ci.date); });
+    }
+  });
+  return list;
 }
 async function apiUpsert(client){
   const res = await fetch(scriptUrl, {
