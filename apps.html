@@ -144,6 +144,11 @@
   .checkin-row .weekday{font-size:12.5px;color:var(--apricot-deep);font-weight:500;min-width:52px;}
   .checkin-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--sage);margin-left:4px;}
   .checkin-row.done .weekday{color:var(--ink-soft);}
+  .checkin-note{
+    width:100%;margin:2px 0 10px;font-family:'Noto Sans TC',sans-serif;
+    border:1px solid var(--border);border-radius:10px;padding:8px 11px;
+    font-size:12.5px;color:var(--ink);resize:vertical;min-height:40px;background:#FFFEFB;
+  }
 
   textarea.notes{width:100%;margin-top:6px;}
   .notes-wrap{margin-top:16px;}
@@ -360,7 +365,7 @@ function planConfig(plan){
 
 function newClient(data){
   const cfg = planConfig(data.plan);
-  const checkins = [1,2,3,4].map(i => ({ date: addMonths(data.start, i*3), done:false }));
+  const checkins = [1,2,3,4].map(i => ({ date: addMonths(data.start, i*3), done:false, note:'' }));
   return {
     id: uid(), name: data.name, plan: data.plan, start: data.start,
     gender: data.gender || '',
@@ -410,6 +415,9 @@ function renderStats(){
   `;
 }
 function initials(name){ return name ? name.trim().slice(0,1) : '？'; }
+function escapeHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 function genderLabel(g){
   if(g === 'female') return '女';
   if(g === 'male') return '男';
@@ -488,6 +496,7 @@ function renderCard(c){
       <input type="checkbox" data-cid="${c.id}" data-cidone="${i}" ${ci.done?'checked':''}>
       <label style="font-size:12px;color:var(--ink-soft);">已完成</label>
     </div>
+    <textarea class="checkin-note" data-cid="${c.id}" data-cinote="${i}" placeholder="這次對焦聊了什麼、後續要注意的事項…">${escapeHtml(ci.note || '')}</textarea>
   `).join('');
 
   return `
@@ -610,6 +619,18 @@ function attachCardEvents(){
       if(!c) return;
       c.checkins[idx].done = el.checked;
       renderList();
+      await pushClient(c);
+    });
+  });
+
+  document.querySelectorAll('textarea.checkin-note').forEach(el => {
+    el.addEventListener('click', e => e.stopPropagation());
+    el.addEventListener('blur', async () => {
+      const cid = el.getAttribute('data-cid');
+      const idx = parseInt(el.getAttribute('data-cinote'), 10);
+      const c = clients.find(x => x.id === cid);
+      if(!c) return;
+      c.checkins[idx].note = el.value;
       await pushClient(c);
     });
   });
